@@ -9,7 +9,11 @@ __pycache__/
 /venv/
 
 # space-intensive data
-/data/
+data/
 
-# general test file
-/tests/playground.py
+# other files
+.DS_Store
+pktrule-pktrule_rfc4271/
+extracted_rules.xlsx
+bgp_4271.json
+RFC_Rule

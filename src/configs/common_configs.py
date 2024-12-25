@@ -1,18 +1,19 @@
 from pathlib import Path
 import logging
 
-import torch
+# import torch
 
 from src.configs.config_base import ConfigBase
 
 
 class PathConfig(ConfigBase):
-    root = Path(__file__).resolve().parents[1]
+    root = Path(__file__).resolve().parents[2]
     src = root / 'src'
     data = root / 'data'
     scripts = root / 'scripts'
     tests = root / 'tests'
     logs = data / 'logs'
+    rfc = root / 'RFC'
 
     def __post_init__(self) -> None:
         for path in vars(self).values():
@@ -24,12 +25,12 @@ class LoggerConfig(ConfigBase):
     logs_dir = PathConfig().logs
 
 
-class OtherConfig(ConfigBase):
-    device = 'default'
+# class OtherConfig(ConfigBase):
+#     device = 'default'
 
-    def __post_init__(self) -> None:
-        if self.device == 'default':
-            if torch.cuda.is_available():
-                self.device = 'cuda'
-            else:
-                self.device = 'cpu'  
+#     def __post_init__(self) -> None:
+#         if self.device == 'default':
+#             if torch.cuda.is_available():
+#                 self.device = 'cuda'
+#             else:
+#                 self.device = 'cpu'  
