@@ -10,6 +10,7 @@ from src.rule_extraction import extraction_run
 from src.logger import Logger
 from src.utils import get_script_name
 from src.configs.common_configs import LoggerConfig
+from src.model import ModelFactory
 
 @click.command()
 @click.option('--rfc', required = True, type = str, default="4271", help="The path to the RFC document.")
@@ -26,9 +27,11 @@ def run(rfc, model, verbose):
     query = make_query(query_item)
     location = PathConfig().data
     logger = None
+    
     if verbose:
         logger_config = LoggerConfig()
         logger = Logger(get_script_name(), **logger_config)
+        
     extraction_run(model, rfc_name, sections, prompt, query, location, logger)
 
 
