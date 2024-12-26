@@ -12,7 +12,8 @@ model_list = {"qwen-max": "QwenModel",
               "llama-3.1-8b-instant": "GroqModel",
               "mixtral-8x7b-32768": "GroqModel",
               "whisper-large-v3-turbo": "GroqModel",
-              "llama3-70b-8192": "GroqModel"}
+              "llama3-70b-8192": "GroqModel",
+              "llama3.3-70b-instruct": "QwenModel"}
 
 class ModelFactory:
     def get(self, model):

@@ -1,15 +1,17 @@
 from src.utils import split_document_by_sections
 from src.rfc import RFC
 
-def make_prompt(sections, prompt_item):
-    assert sections["4.1.  Message Header Format"], "The section is not found"
-    prompt_dic = {"prompt_4217_1": f"You are a helpful AI Assistant. You can understand the examples \
+def make_prompt(prompt_item):
+    rfc_4271_sections = split_document_by_sections(rfc='4271')
+    # print(f"一共有{len(rfc_4271_sections)}个section")
+    assert rfc_4271_sections["4.1.  Message Header Format"], "The section is not found"
+    prompt_dic = {"prompt_4271_1": f"You are a helpful AI Assistant. You can understand the examples \
                 I gave and draw inferences from one instance. Before answering the \
                 question, refer to the examples given to you first, and then analyze \
                 them step by step. I will give you a part of the text from the RFC \
                 and you need to extract the rules from it using this format: chk_bf(CONDITION, OPERATION), \
                 it means before excute OPERATION the CONDITION should be checked. Here is the \
-                text: {sections["4.1.  Message Header Format"]}. From this text, we can extract some rules. \
+                text: {rfc_4271_sections["4.1.  Message Header Format"]}. From this text, we can extract some rules. \
                 For example 1, chk_bf(len(Marker) == 16, use(Marker)), it means before accessing the Marker field, \
                 we have to check if the length of the Marker is 16. This rule can be extracted from 'Marker:This \
                 16-octet field is included for compatibility'. Example 2, \

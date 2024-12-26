@@ -1,14 +1,7 @@
 
-n section.
 
-1.1. Background
-Here is some background information.
 
-1.2. Scope
-This is the scope of the document.
 
-2. Methodology
-This section explains the methodology.
 
 
 Network Working Group                                    Y. Rekhter, Ed.
@@ -652,7 +645,7 @@ RFC 4271                         BGP-4                      January 2006
          This 16-octet field is included for compatibility; it MUST be
          set to all ones.
 
-      Length
+      Length:
 
          This 2-octet unsigned integer indicates the total length of the
          message, including the header in octets.  Thus, it allows one
@@ -2056,7 +2049,7 @@ RFC 4271                         BGP-4                      January 2006
    peer has tried to establish a peer session.
 
    The mandatory attributes related to timers are described in Section
-   10. Each timer has a "timer" and a "time" (the initial value).
+   10.  Each timer has a "timer" and a "time" (the initial value).
 
    The optional Session attributes are listed below.  These optional
    attributes may be supported, either per connection or per local

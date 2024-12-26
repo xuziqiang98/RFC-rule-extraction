@@ -1,4 +1,5 @@
 import os
+import time
 
 from tqdm import tqdm
 from openai import OpenAI
@@ -56,3 +57,6 @@ def extraction_run(model, rfc, sections, prompt, query, location, logger):
         file.close()
         
         print(output)
+        
+        if model == "llama3.3-70b-instruct":
+            time.sleep(5)

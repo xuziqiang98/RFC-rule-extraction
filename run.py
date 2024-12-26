@@ -18,12 +18,12 @@ from src.model import ModelFactory
 @click.option('--verbose', is_flag = True, help="Save exhausted log.")
 def run(rfc, model, verbose):
     rfc_name = f"RFC{rfc}"
-    rfc_path = RFC().file_path(rfc)
+    # rfc_path = RFC().file_path(rfc)
     # print(f"RFC Folder Path: {rfc_path}")
-    sections = split_document_by_sections(rfc_path)
-    prompt_item = "prompt_4217_1"
+    sections = split_document_by_sections(rfc)
+    prompt_item = "prompt_4271_1"
     query_item = "query_1"
-    prompt = make_prompt(sections, prompt_item)
+    prompt = make_prompt(prompt_item)
     query = make_query(query_item)
     location = PathConfig().data
     logger = None
