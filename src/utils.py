@@ -3,10 +3,14 @@ import inspect
 import random
 # import numpy as np
 import re
+import openpyxl
 
 from types import MethodType, FunctionType
 from pathlib import Path
 from src.rfc import RFC
+from src.configs.common_configs import PathConfig
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font
 
 def enable_grad_for_hf_llm(func: MethodType | FunctionType) -> MethodType | FunctionType:
     return func.__closure__[1].cell_contents
@@ -85,3 +89,60 @@ def split_document_by_sections(rfc : str) -> dict:
                 elif current_section is not None:
                     sections[current_section] += line
         return sections
+
+def extract_formatted_rules(log_path) -> list:
+    # 读取日志文件
+    with open(log_path, 'r') as file:
+        log = file.read()
+        file.close()
+    # 使用正则表达式匹配规则
+    pattern = r'chk_bf\([^)]*\)\)'
+    rules = list(set(re.findall(pattern, log)))
+    return rules
+
+def insert2excel(log_name):
+    
+    is_new = False
+    
+    log_path = PathConfig().data / log_name
+    rules = extract_formatted_rules(log_path)
+    
+    excel_name = "extracted_rules.xlsx"
+    excel_path = PathConfig().root / excel_name
+    
+    try:
+        # 尝试打开已有的Excel文件
+        workbook = openpyxl.load_workbook(excel_path)
+    except FileNotFoundError:
+        # 如果文件不存在，则创建新的工作簿，并删除默认的'Sheet'工作表
+        workbook = openpyxl.Workbook()
+        default_sheet = workbook.active
+        workbook.remove(default_sheet)
+    
+    table_name = "RFC4217_PK"
+    
+    try:
+        worksheet = workbook[table_name]
+    except KeyError:
+        is_new = True
+        worksheet = workbook.create_sheet(table_name)
+    
+    # workbook = openpyxl.load_workbook(excel_path)
+    # worksheet = workbook["RFC4217_PK"]
+    
+    column_count = worksheet.max_column
+    
+    if is_new:
+        current_column = 1
+    else:
+        current_column = column_count + 1
+    
+    for index, value in enumerate(rules):
+        if index == 0:
+            worksheet.cell(row = index + 1, column = current_column).value = log_name
+            bold_font = Font(bold=True)
+            worksheet.cell(row = index + 1, column = current_column).font = bold_font
+        else:
+            worksheet.cell(row = index + 1, column = current_column).value = value
+    
+    workbook.save(excel_path)
