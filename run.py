@@ -50,7 +50,7 @@ def run(rfc, model, verbose):
     #############################
     
     extraction_run(model, sections, prompt, query, save_path, logger)
-    insert2excel(log_name)
+    insert2excel(rfc_name, log_name)
 
 
 if __name__ == '__main__':

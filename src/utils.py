@@ -100,7 +100,7 @@ def extract_formatted_rules(log_path) -> list:
     rules = list(set(re.findall(pattern, log)))
     return rules
 
-def insert2excel(log_name):
+def insert2excel(rfc, log_name):
     
     is_new = False
     
@@ -119,7 +119,7 @@ def insert2excel(log_name):
         default_sheet = workbook.active
         workbook.remove(default_sheet)
     
-    table_name = "RFC4217_PK"
+    table_name = f"{rfc}_PK"
     
     try:
         worksheet = workbook[table_name]
