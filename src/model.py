@@ -1,4 +1,5 @@
 import os
+import ollama
 
 from groq import Groq
 from openai import OpenAI
@@ -11,10 +12,10 @@ model_list = {"qwen-max": "QwenModel",
               "llama-3.3-70b-versatile": "GroqModel",
               "llama-3.1-8b-instant": "GroqModel",
               "mixtral-8x7b-32768": "GroqModel",
-              "whisper-large-v3-turbo": "GroqModel",
               "llama3-70b-8192": "GroqModel",
               "llama3.3-70b-instruct": "QwenModel",
-              "llama3.1-405b-instruct": "QwenModel"}
+              "llama3.1-405b-instruct": "QwenModel",
+              "llama3.1": "OllamaModel"}
 
 class ModelFactory:
     def get(self, model):
@@ -78,3 +79,23 @@ class GroqModel(ModelBase):
             model = self.model
         )
         return llm.choices[0].message.content
+
+class OllamaModel(ModelBase):
+    def __init__(self, model):
+        super().__init__(model)
+    
+    def run(self, prompt, query):
+        llm = ollama.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ]
+        )
+        return llm["message"]["content"]

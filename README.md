@@ -24,6 +24,8 @@ After that, configure API KEY to environment variables:
 
 `echo "export DASHSCOPE_API_KEY='YOUR_DASHSCOPE_API_KEY'" >> ~/.bashrc`
 
+This project also supports **GroqCloud** API KEY or local LLM model deployed by **Ollama**.
+
 ## Usage
 You can use "--help" to check what options are available:
 

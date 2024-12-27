@@ -8,19 +8,19 @@ from src.model import ModelFactory
 
 def extraction_run(model, sections, prompt, query, save_path, logger):
     
-    verbose = False
-    if logger is not None:
-        verbose = True
+    # verbose = False
+    # if logger is not None:
+    #     verbose = True
     
     llm_model = ModelFactory().get(model)
 
     for section in tqdm(sections):
-        if verbose:
+        if logger is not None:
             logger.info(f"Section: {section}")
     
         output = llm_model.run(prompt, query + sections[section])
         
-        if verbose:
+        if logger is not None:
             logger.info(output)
         
         # store the answer in a file
