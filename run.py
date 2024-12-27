@@ -22,16 +22,25 @@ def run(rfc, model, verbose):
     #############################
     # Set Variables             #
     #############################
+    
+    logger = None
+    
+    if verbose:
+        logger_config = LoggerConfig()
+        logger = Logger(get_script_name(), **logger_config)
+        
     rfc_name = f"RFC{rfc}"
     # rfc_path = RFC().file_path(rfc)
     # print(f"RFC Folder Path: {rfc_path}")
+    
+    if logger is not None:
+        logger.info("Splitting the document {rfc_name} into sections.")
+    
     sections = split_document_by_sections(rfc)
     prompt_item = "prompt_4271_1"
     query_item = "query_1"
     prompt = make_prompt(prompt_item)
     query = make_query(query_item)
-    
-    logger = None
     
     # 获取当前时间
     now = datetime.now()
@@ -41,17 +50,25 @@ def run(rfc, model, verbose):
     log_name = f"{rfc_name}_{model}_{formatted_time}.txt"
     save_path = location / log_name
     
-    if verbose:
-        logger_config = LoggerConfig()
-        logger = Logger(get_script_name(), **logger_config)
-    
     #############################
     # Extract Rules             #
     #############################
     
+    if logger is not None:
+        logger.info(f"Extracting rules from {rfc_name} using LLM model {model}")
+    
     extraction_run(model, sections, prompt, query, save_path, logger)
+    
+    if logger is not None:
+        logger.info(f"Extracted rules are saved to {save_path}")
+    
+    if logger is not None:
+        logger.info("Inserting extracted rules into Excel file.")
+    
     insert2excel(rfc_name, log_name)
-
+    
+    if logger is not None:
+        logger.info("All processes are done.")
 
 if __name__ == '__main__':
     run()
