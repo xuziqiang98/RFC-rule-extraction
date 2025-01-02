@@ -4,6 +4,7 @@ import random
 # import numpy as np
 import re
 import openpyxl
+import regex
 
 from types import MethodType, FunctionType
 from pathlib import Path
@@ -96,8 +97,13 @@ def extract_formatted_rules(log_path) -> list:
         log = file.read()
         file.close()
     # 使用正则表达式匹配规则
-    pattern = r'chk_bf\([^)]*\)\)'
+    # pattern = r'chk_bf\([^)]*\)\)'
+    # pattern = r'chk_bf\([^)]*,[^)]*\)\)'
+    # pattern = r'chk_bf\(([^()]|(?R))*\)'
+    pattern = r'<RULE>(.*?)<\/RULE>'
+    
     rules = list(set(re.findall(pattern, log)))
+    # rules = list(set(regex.findall(pattern, log)))
     return rules
 
 def insert2excel(rfc, log_name):

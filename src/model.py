@@ -15,7 +15,9 @@ model_list = {"qwen-max": "QwenModel",
               "llama3-70b-8192": "GroqModel",
               "llama3.3-70b-instruct": "QwenModel",
               "llama3.1-405b-instruct": "QwenModel",
-              "llama3.1": "OllamaModel"}
+              "llama3.1": "OllamaModel",
+              "qwen2.5:14b": "OllamaModel",
+              "deepseek-chat": "DeepseekModel"}
 
 class ModelFactory:
     def get(self, model):
@@ -99,3 +101,27 @@ class OllamaModel(ModelBase):
             ]
         )
         return llm["message"]["content"]
+    
+class DeepseekModel(ModelBase):
+    def __init__(self, model):
+        super().__init__(model)
+        self.client = OpenAI(
+            api_key=os.getenv("DEEPSEEK_API_KEY"),
+            base_url="https://api.deepseek.com/v1",
+        )
+    
+    def run(self, prompt, query) -> str:
+        llm = self.client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ],
+            model = self.model
+        )
+        return llm.choices[0].message.content

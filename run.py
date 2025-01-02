@@ -34,20 +34,25 @@ def run(rfc, model, verbose):
     # print(f"RFC Folder Path: {rfc_path}")
     
     if logger is not None:
-        logger.info("Splitting the document {rfc_name} into sections.")
+        logger.info(f"Splitting the document {rfc_name} into sections.")
     
     sections = split_document_by_sections(rfc)
-    prompt_item = "prompt_4271_1"
-    query_item = "query_1"
+    
+    # prompt_item = "prompt-4271-1"
+    prompt_item = "prompt-4271-2"
+    
+    # query_item = "query-1"
+    query_item = "query-2"
+    
     prompt = make_prompt(prompt_item)
     query = make_query(query_item)
     
     # 获取当前时间
     now = datetime.now()
     # 按照指定格式进行格式化输出
-    formatted_time = now.strftime('%Y_%m_%d_%H_%M')
+    formatted_time = now.strftime('%Y_%m_%d_%H_%M_%S')
     location = PathConfig().data
-    log_name = f"{rfc_name}_{model}_{formatted_time}.txt"
+    log_name = f"{rfc_name}_{model}_{prompt_item}_{formatted_time}.txt"
     save_path = location / log_name
     
     #############################
