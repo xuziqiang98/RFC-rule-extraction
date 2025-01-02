@@ -18,7 +18,7 @@ def extraction_run(model, sections, prompt, query, save_path, logger):
         if logger is not None:
             logger.info(f"Section: {section}")
     
-        output = llm_model.run(prompt, query + sections[section])
+        output = llm_model.run(prompt, f"{query} Section: {section}. {sections[section]}")
         
         if logger is not None:
             logger.info(output)
