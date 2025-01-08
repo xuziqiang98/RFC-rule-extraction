@@ -11,9 +11,13 @@ __pycache__/
 # space-intensive data
 data/
 
+# logs
+*.log
+
 # other files
 .DS_Store
 pktrule-pktrule_rfc4271/
-extracted_rules.xlsx
-bgp_4271.json
+*.xlsx
+*.json
+llm提取RFC整理.md
 RFC_Rule.md
