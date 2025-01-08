@@ -7,6 +7,7 @@ from src.configs.common_configs import LoggerConfig
 logger_config = LoggerConfig()
 logger = Logger(get_script_name(), **logger_config)
 logger.info('This is an info message.')
+logger.error('This is an error message.')
 
 logger.set_level('ERROR')
 logger.info("You shouldn't see me")

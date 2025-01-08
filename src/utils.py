@@ -5,6 +5,8 @@ import random
 import re
 import openpyxl
 import regex
+import json
+import time
 
 from types import MethodType, FunctionType
 from pathlib import Path
@@ -106,11 +108,11 @@ def extract_formatted_rules(log_path) -> list:
     # rules = list(set(regex.findall(pattern, log)))
     return rules
 
-def insert2excel(rfc, log_name):
+def insert2excel(rfc, log_name, log_path):
     
     is_new = False
     
-    log_path = PathConfig().data / log_name
+    # log_path = PathConfig().data / log_name
     rules = extract_formatted_rules(log_path)
     
     excel_name = "extracted_rules.xlsx"
@@ -125,7 +127,7 @@ def insert2excel(rfc, log_name):
         default_sheet = workbook.active
         workbook.remove(default_sheet)
     
-    table_name = f"{rfc}_PK"
+    table_name = f"{rfc}_PKF"
     
     try:
         worksheet = workbook[table_name]
@@ -152,3 +154,62 @@ def insert2excel(rfc, log_name):
             worksheet.cell(row = index + 1, column = current_column).value = value
     
     workbook.save(excel_path)
+    
+def extract_meta_info(log_path) -> list:
+    # 读取日志文件
+    with open(log_path, 'r') as file:
+        log = file.read()
+        file.close()
+    # 使用正则表达式匹配规则
+    pattern = r'<META_INFO>(.*?)<\/META_INFO>'
+    
+    info = list(set(re.findall(pattern, log, re.DOTALL)))
+    return info
+
+def merge_meta_info(meta_info: list) -> dict:
+    template = f'''
+    {{
+        "Struct_list": [],
+        "Value_list": {{}}
+    }}
+    '''
+    data = json.loads(template)
+    for info in meta_info:
+        if info == "":
+            continue
+        try:
+            info_json = json.loads(info)
+            # print(json.dumps(info_json, indent=4))
+            # time.sleep(5)
+            if "Struct_list" in info_json:
+                # print(f"[+] Extracted Struct_list:")
+                # print(json.dumps(info_json["Struct_list"], indent=4))
+                # time.sleep(5)
+                try:
+                    # print(f"[+] Trying to update Struct_list...")
+                    for item in info_json["Struct_list"]:
+                        data["Struct_list"].append(item)
+                    # data["Struct_list"].append(info_json["Struct_list"])
+                    # print(f"[+] Updated Struct_list:")
+                    # print(json.dumps(data["Struct_list"], indent=4))
+                    # time.sleep(5)
+                except TypeError as e:
+                    # print(e)
+                    continue
+            if "Value_list" in info_json:
+                # print(f"[+] Extracted Value_list:")
+                # print(json.dumps(info_json["Value_list"], indent=4))
+                # time.sleep(5)
+                try:
+                    # print(f"[+] Trying to update Value_list...")
+                    data["Value_list"].update(info_json["Value_list"])
+                    # print(f"[+] Updated Value_list:")
+                    # print(json.dumps(data["Value_list"], indent=4))
+                    # time.sleep(5)
+                except TypeError as e:
+                    # print(e)
+                    continue
+        except json.JSONDecodeError as e:
+            # print(e)
+            continue
+    return data

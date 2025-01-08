@@ -6,7 +6,7 @@ from openai import OpenAI
 from datetime import datetime
 from src.model import ModelFactory
 
-def extraction_run(model, sections, prompt, query, save_path, logger):
+def run(model, sections, prompt, query, save_path, logger):
     
     # verbose = False
     # if logger is not None:
@@ -17,8 +17,15 @@ def extraction_run(model, sections, prompt, query, save_path, logger):
     for section in tqdm(sections):
         if logger is not None:
             logger.info(f"Section: {section}")
-    
-        output = llm_model.run(prompt, f"{query} Section: {section}. {sections[section]}")
+
+        if sections[section] == "":
+            continue
+        
+        try:
+            output = llm_model.run(prompt, f"{query} Section: {section}. Content: {sections[section]}")
+        except Exception as e:
+            if logger is not None:
+                logger.error(e)
         
         if logger is not None:
             logger.info(output)
@@ -32,4 +39,8 @@ def extraction_run(model, sections, prompt, query, save_path, logger):
         print(output)
         
         if model == "llama3.3-70b-instruct":
+            time.sleep(5)
+        elif model == "llama3.1-405b-instruct":
+            time.sleep(5)
+        elif model == "llama-3.3-70b-versatile":
             time.sleep(5)
