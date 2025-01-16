@@ -51,9 +51,10 @@ def make_prompt(prompt_item):
                 State Machine and Error Handling, you only need to extract rules about the fields in any Header Format. Don't forget give reasons why you extract the rules.
                 ''',
                 "prompt-4271-pkt-3": f'''
-                You are a professional AI Assistant and experted in Network Protocol. Your task is to extract the rules from the RFC documents. \
-                You can undersand the examples I gave and draw inferences from one instance. Before answering the question, refer to the examples given to you first, \
-                and then analyze them step by step. 
+                You are a professional AI Assistant and experted in Network Protocol. You have already know many information about network protocols and RFC ducuments. \
+                You can correctly distinguish what a message is, what a field is, and what a variable is. \
+                Your task is to extract the rules from the RFC documents. You can undersand the examples I gave and draw inferences from one instance. Before answering \
+                the question, refer to the examples given to you first, and then analyze them step by step. 
                 The extraction of the rules from RFC documents using specific format. Here are rules format's template: \
                 * chk_bf(CONDITION, use(MESSAGE_TYPE.FIELD)): It means before accessing the field in the message type, we have to check if the condition is satisfied. \
                 CONDITION is represented by equations or inequalities, sometimes it is a combination of them.
@@ -75,9 +76,10 @@ def make_prompt(prompt_item):
                 packet format. If given text is not enough to extract the rules or is not related to the packet format, please let me know and skip to extract rules.
                 ''',
                 "prompt-4271-mti-1": f'''
-                You are a professional AI Assistant and experted in Network Protocol. Your task is to extract meta information from the RFC documents and conclude them with JSON format. \
-                You can undersand the examples I gave and draw inferences from one instance. Before answering the question, refer to the examples given to you first, \
-                and then analyze them step by step. \
+                You are a professional AI Assistant and experted in Network Protocol. You have already know many information about network protocols and RFC ducuments. \
+                You can correctly distinguish what a message is, what a field is, and what a variable is. Your task is to extract meta information from the RFC documents and \
+                conclude them with JSON format. You can undersand the examples I gave and draw inferences from one instance. Before answering the question, refer to the \
+                examples given to you first, and then analyze them step by step. 
                 For example, I will give you a part of the text from the RFCs. Section: "4.1.  Message Header Format", Content: {rfc_4271_sections["4.1.  Message Header Format"]}. \
                 From this text, we can extract the following meta information:
                 <META_INFO>
@@ -107,18 +109,25 @@ def make_prompt(prompt_item):
                     }}
                 }}
                 </META_INFO>
-                Struct_list is a list of structures in the packet structure, which includes struct_name, value and fieldname. 'struct_name' is the name of the structure, like Message Header, \
+                * Struct_list is a list of structures in the packet structure, which includes struct_name, value and fieldname. 'struct_name' is the name of the structure, like Message Header, \
                 OPEN Message, UPDATE Message, etc. 'fieldname' is the name of the field in the structure, in this case, we can know the Message Header is consisted by three fields: Marker, Length and Type. \
                 'value' is the corresponding length of the field in bits, for example, Marker is 16 octets, so the first element in 'value' is 16*8=128 bits. If the field is a fixed length, you can directly give the value of the field. \
                 If the field is a variable length, you can give 0 to the value of the field.
-                Value_list is a dictionary, each item in it is a key-value pair. From the text, we can know the Type field has four values: 1, 2, 3, 4, which represent OPEN, UPDATE, NOTIFICATION and KEEPALIVE respectively. \
+                * Value_list is a dictionary, each item in it is a key-value pair. From the text, we can know the Type field has four values: 1, 2, 3, 4, which represent OPEN, UPDATE, NOTIFICATION and KEEPALIVE respectively. \
                 So if a field has multiple values, you can conclude them in the format of "value's meaning": "value".
                 Sometimes you can only extract Struct_list or Value_list, it should be ok. If you can not extract any information or the given text is not enough to extract the meta information, \
                 please let me know and skip to extract meta information, but do not output empty meta information.
-                You have to notice that the item in 'Struct_list' has and only has three keys: 'struct_name', 'value' and 'fieldname'. The key of item in 'Value_list' is the name of the field(if the field belongs to one specific \
+                * You have to notice that the item in 'Struct_list' has and only has three keys: 'struct_name', 'value' and 'fieldname'. The key of item in 'Value_list' is the name of the field(if the field belongs to one specific \
                 message type, you can add the message type before the field name, like OPEN Message Error and UPDATE Message Error), \
                 and the value of the item is a dictionary, which includes the value of the field and the meaning of the value, they connected by ':', and value is a string at the right side of ':'. \
                 If the right side of ':' is not a number or a number in string format, it's not a valid value, you don't need to extract it.
+                ** For example, "Time in seconds": "Time in seconds" is not a valid value, because the right side of ':' is not a number or a number in string format. \
+                "TRUE": "TRUE", is not a valid value, because the right side of ':' is not a number or a number in string format. \
+                If you meet the above situation, you can skip to extract the value. 
+                * In addition, when you extract the value and you put somethins to the key position of JSON, you have to make sure they are not implicit. \
+                ** For example, 'Error subcode' is implicit, you have to point out this error subcode belongs to which message type, like OPEN Message Error subcode, it can be written as "OPEN_Message.Error_Subcode". \
+                * Also, the string in struct_name should be explicit, you can not use the abbreviation or the acronym, you have to use the full name of the structure and the field. \
+                ** For example, "struct_name": "Open_Message" is implicit, you have to use "struct_name": "Message_Header.OPEN_Message".
                 '''}
     
     return prompt_dic[prompt_item]
@@ -139,6 +148,6 @@ def make_query(query_item):
         to extract the meta information, please let me know and skip to extract meta information. Note that, the extracted meta information \
         should be surrounded by <META_INFO></META_INFO> like example. DO NOT output empty meta information, if you just can extract Struct_list, \
         only output Struct_list, if you just can extract Value_list, only output Value_list. If you can not extract any information, do not output \
-        empty meta information using <META_INFO></META_INFO>.
+        empty meta information using <META_INFO></META_INFO>. Before extracting, recall the examples I gave you and analyze them step by step.
         '''}
     return query_dic[query_item]

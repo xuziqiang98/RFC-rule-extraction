@@ -5,15 +5,15 @@ from src.utils import extract_meta_info, merge_meta_info
 from src.configs.common_configs import PathConfig
 
 location = PathConfig().data
-log_name = "RFC4271_deepseek-chat_prompt-4271-mti-1_2025_01_07_19_16_23.txt"
-log_path = location / log_name
+log_dir = "rfc4271_deepseek-chat_2025_01_16_11_11_29"
+log_name = "meta-info_rfc4271_prompt-4271-mti-1_query-3.txt"
+log_path = location / log_dir / log_name
 raw_info = extract_meta_info(log_path)
 
 # for info in raw_info:
 #     print(info)
 
 json_info = merge_meta_info(raw_info)
-
 
 output = json.dumps(json_info, indent=4)
 print(output)
@@ -68,6 +68,10 @@ print(output)
 #             "Bad BGP Identifier": "4",
 #             "Unsupported Optional Parameters": "5",
 #             "Unspecific": "0"
+#         }},
+#         "test": {{
+#             "key1": "one",
+#             "key2": "two"
 #         }}
 #     }}
 # }}
@@ -75,9 +79,25 @@ print(output)
 
 # data1 = json.loads(mti1)
 # print(data1["Value_list"])
-# # data2 = json.loads(mti2)
+# data2 = json.loads(mti2)
 # data2 = json.loads(raw_info[1])
 # print(data2["Value_list"])
+
+# for item in data2["Value_list"]:
+#     for i in data2["Value_list"][item]:
+#         if data2["Value_list"][item][i].isdigit():
+#             print(f"i is ok")
+#         else:
+#             print(f"i is not ok")
+#             break
+
+# for item in data2["Value_list"]:
+#     if all(data2["Value_list"][item][key].isdigit() for key in data2["Value_list"][item]):
+#         try:
+#             data1["Value_list"].update(data2["Value_list"][item])
+#         except TypeError as e:
+#             continue
+# print(data1)
 
 # data1["Value_list"].update(data2["Value_list"])
 # # data1.update(data2)

@@ -179,37 +179,26 @@ def merge_meta_info(meta_info: list) -> dict:
             continue
         try:
             info_json = json.loads(info)
-            # print(json.dumps(info_json, indent=4))
-            # time.sleep(5)
             if "Struct_list" in info_json:
-                # print(f"[+] Extracted Struct_list:")
-                # print(json.dumps(info_json["Struct_list"], indent=4))
-                # time.sleep(5)
                 try:
-                    # print(f"[+] Trying to update Struct_list...")
                     for item in info_json["Struct_list"]:
                         data["Struct_list"].append(item)
-                    # data["Struct_list"].append(info_json["Struct_list"])
-                    # print(f"[+] Updated Struct_list:")
-                    # print(json.dumps(data["Struct_list"], indent=4))
-                    # time.sleep(5)
                 except TypeError as e:
-                    # print(e)
                     continue
             if "Value_list" in info_json:
-                # print(f"[+] Extracted Value_list:")
-                # print(json.dumps(info_json["Value_list"], indent=4))
-                # time.sleep(5)
+                pop_list = []
+                for item in info_json["Value_list"]:
+                    if all(info_json["Value_list"][item][key].isdigit() for key in info_json["Value_list"][item]):
+                        continue
+                    else:
+                        # 有些Value_list中的值不是数字，需要排除
+                        pop_list.append(item)
+                for item in pop_list:
+                    info_json["Value_list"].pop(item)
                 try:
-                    # print(f"[+] Trying to update Value_list...")
                     data["Value_list"].update(info_json["Value_list"])
-                    # print(f"[+] Updated Value_list:")
-                    # print(json.dumps(data["Value_list"], indent=4))
-                    # time.sleep(5)
                 except TypeError as e:
-                    # print(e)
                     continue
         except json.JSONDecodeError as e:
-            # print(e)
             continue
     return data
