@@ -13,6 +13,7 @@ from src.logger import Logger
 from src.utils import get_script_name
 from src.configs.common_configs import LoggerConfig
 from src.model import ModelFactory
+from src.parser import build_nested_json
 
 @click.command()
 @click.option('--rfc', required = True, type = str, default="4271", help="The path to the RFC document.")
@@ -115,6 +116,7 @@ def run(rfc, model, verbose):
     if logger is not None:
         logger.info(f"Merging meta info from {meta_info_log_path}.")
     
+    # 合并完的meta info
     json_info = merge_meta_info(meta_info)
     
     meta_info_json = f"meta-info_{rfc_name}.json"
@@ -125,6 +127,17 @@ def run(rfc, model, verbose):
     
     with open(meta_info_json_path, "w") as file:
         json.dump(json_info, file, indent=4)
+    
+    # 将meta info处理成嵌套结构
+    nested_json = build_nested_json(rfc, json_info)
+    nested_json_path = output_path / f"nested_{rfc_name}.json"
+    
+    if logger is not None:
+        logger.info(f"Saving nested JSON formatted meta info to {nested_json_path}.")
+    
+    with open(nested_json_path, "w") as file:
+        json.dump(nested_json, file, indent=4)
+    
     
     if logger is not None:
         logger.info("All processes are done.")

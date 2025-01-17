@@ -86,7 +86,7 @@ def make_prompt(prompt_item):
                 {{
                     "Struct_list": [
                         {{
-                            "struct_name": "Message Header",
+                            "struct_name": "Message_Header",
                             "value": [
                                 128,
                                 16,

@@ -7,6 +7,7 @@ import openpyxl
 import regex
 import json
 import time
+import spacy
 
 from types import MethodType, FunctionType
 from pathlib import Path
@@ -14,6 +15,9 @@ from src.rfc import RFC
 from src.configs.common_configs import PathConfig
 from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity as cos_sim
+
 
 def enable_grad_for_hf_llm(func: MethodType | FunctionType) -> MethodType | FunctionType:
     return func.__closure__[1].cell_contents
@@ -202,3 +206,13 @@ def merge_meta_info(meta_info: list) -> dict:
         except json.JSONDecodeError as e:
             continue
     return data
+
+def cosine_similarity(str1, str2):
+    # nlp = spacy.load('en_core_web_md')
+    # doc1 = nlp(str1)
+    # doc2 = nlp(str2)
+    # return doc1.similarity(doc2)
+    
+    vectorizer = CountVectorizer().fit_transform([str1, str2])
+    vectors = vectorizer.toarray()
+    return cos_sim([vectors[0]], [vectors[1]])[0][0]
