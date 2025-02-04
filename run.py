@@ -44,9 +44,17 @@ def run(rfc, model, verbose):
     # 按照指定格式进行格式化输出
     formatted_time = now.strftime('%Y_%m_%d_%H_%M_%S')
     data_location = PathConfig().data
-    # RFC相关日志保存在这里
-    output_dir = f"{rfc_name}_{model}_{formatted_time}"    
+    
+    # RFC相关日志保存在output_dir文件夹下，完整的路径是data_location / output_dir
+    # 文件夹命名不能包含冒号，所以需要将model中的冒号替换为下划线
+    split_model = model.split(":")
+    if len(split_model) > 1:
+        rename_model = f"{split_model[0]}_{split_model[1]}"
+        output_dir = f"{rfc_name}_{rename_model}_{formatted_time}"
+    else:    
+        output_dir = f"{rfc_name}_{model}_{formatted_time}"    
     output_path = data_location / output_dir
+    
     # 创建文件夹
     output_path.mkdir(parents=True, exist_ok=True)
     
@@ -77,6 +85,7 @@ def run(rfc, model, verbose):
     if logger is not None:
         logger.info(f"Extracting pkt rules from {rfc_name} using LLM model {model}.")
     
+    # LLMs提取规则的输出保存在pktrule_log_path中
     extraction_run(model, sections, pkt_prompt, pkt_query, pktrule_log_path, logger)
     
     # if logger is not None:
@@ -87,7 +96,7 @@ def run(rfc, model, verbose):
     
     # 将提取的规则插入到Excel文件中
     # 这里只是用来确认提取的规则是否正确
-    insert2excel(rfc_name, pktrule_log, pktrule_log_path)
+    insert2excel(rfc_name, pktrule_log, output_path)
     
     #############################
     # Extract Meta Info         #

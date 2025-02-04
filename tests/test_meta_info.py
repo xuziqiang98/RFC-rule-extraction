@@ -5,18 +5,18 @@ from src.utils import extract_meta_info, merge_meta_info
 from src.configs.common_configs import PathConfig
 
 location = PathConfig().data
-log_dir = "rfc4271_deepseek-chat_2025_01_16_11_11_29"
+log_dir = "rfc4271_deepseek-r1_32b_2025_02_03_19_56_36"
 log_name = "meta-info_rfc4271_prompt-4271-mti-1_query-3.txt"
 log_path = location / log_dir / log_name
 raw_info = extract_meta_info(log_path)
 
-# for info in raw_info:
-#     print(info)
+for info in raw_info:
+    print(info)
 
-json_info = merge_meta_info(raw_info)
+# json_info = merge_meta_info(raw_info)
 
-output = json.dumps(json_info, indent=4)
-print(output)
+# output = json.dumps(json_info, indent=4)
+# print(output)
 
 # print(f"一共有{len(meta_info)}个规则")
 
