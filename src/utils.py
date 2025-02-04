@@ -113,14 +113,24 @@ def extract_formatted_rules(log_path) -> list:
     return rules
 
 def insert2excel(rfc, log_name, log_path):
+    '''
+    args:
+        log_name: 日志文件名，保存的是从RFC文档中提取的规则
+        log_path: 日志文件所在的路径
+    '''
     
     is_new = False
     
     # log_path = PathConfig().data / log_name
-    rules = extract_formatted_rules(log_path)
     
+    # full_path = log_path / log_name
+    
+    # 提取格式化的规则
+    rules = extract_formatted_rules(log_path / log_name)
+    
+    # excel保存在日志同级目录下
     excel_name = "extracted_rules.xlsx"
-    excel_path = PathConfig().root / excel_name
+    excel_path = log_path / excel_name
     
     try:
         # 尝试打开已有的Excel文件

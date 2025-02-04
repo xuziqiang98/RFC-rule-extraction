@@ -17,7 +17,9 @@ model_list = {"qwen-max": "QwenModel",
               "llama3.1-405b-instruct": "QwenModel",
               "llama3.1": "OllamaModel",
               "qwen2.5:14b": "OllamaModel",
-              "deepseek-chat": "DeepseekModel"}
+              "deepseek-r1:32b": "OllamaModel",
+              "deepseek-chat": "DeepseekModel",
+              "deepseek-reasoner": "DeepseekModel"}
 
 class ModelFactory:
     def get(self, model):
@@ -100,6 +102,8 @@ class OllamaModel(ModelBase):
                 }
             ]
         )
+        # if self.model == "deepseek-r1:32b":
+        #     return llm["message"]["reasoning_content"],llm["message"]["content"]
         return llm["message"]["content"]
     
 class DeepseekModel(ModelBase):
@@ -122,6 +126,8 @@ class DeepseekModel(ModelBase):
                     "content": query
                 }
             ],
-            model = self.model
+            model = self.model,
+            max_tokens = 8192,
+            context_window = 65536,
         )
         return llm.choices[0].message.content
