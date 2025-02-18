@@ -128,6 +128,84 @@ def make_prompt(prompt_item):
                 ** For example, 'Error subcode' is implicit, you have to point out this error subcode belongs to which message type, like OPEN Message Error subcode, it can be written as "OPEN_Message.Error_Subcode". \
                 * Also, the string in struct_name should be explicit, you can not use the abbreviation or the acronym, you have to use the full name of the structure and the field. \
                 ** For example, "struct_name": "Open_Message" is implicit, you have to use "struct_name": "Message_Header.OPEN_Message".
+                ''',
+                "prompt-4271-mti-2": f'''
+                任务：
+                    - 从给定的RFC文档章节中提取字段信息，然后用给定的JSON格式输出。
+                    - 提取信息之前，请参考我给你的例子，然后逐步分析，搞清楚应该提取什么信息。
+                    - 如果给定的文本不足以提取字段信息，直接跳过，不要用JSON输出错误信息或者说明性的信息。
+                任务说明：
+                    - 字段信息是指RFC文档中的字段名称、字段大小（字节）、字段取值、出自哪个RFC文档、文档的哪一章。
+                    - 字段和字段之间可能存在嵌套关系，要在JSON中体现出来。
+                    - 协议的实例一般由消息头、消息体和可选参数组成，每一部分都要提取字段信息。
+                    - 输出的JSON需要用<META_INFO></META_INFO>包裹。
+                例子1：
+                {{
+                    "struct_name": "Message_Header",
+                    "info": {{
+                        "rfc": "rfc4271",
+                        "chapter": "4.1."
+                    }},
+                    "bitwidth": {{}},
+                    "fieldname": [
+                        "Marker",
+                        "Length",
+                        "Type"
+                    ]
+                }}
+                例子1说明：
+                    - Message_Header并不是字段，这里用于标识消息头。
+                    - rfc4271是RFC文档的编号，4.1.是文档的章节。
+                    - bitwidth是字段的大小，单位是比特。由于Message_Header是消息头，没有字段大小，这里为空。
+                    - fieldname是消息头包含的字段，体现出了嵌套关系，这里有三个字段：Marker、Length和Type。
+                例子2：
+                {{
+                    "struct_name": "Marker",
+                    "info": {{
+                        "rfc": "rfc4271",
+                        "chapter": "4.1.",
+                        "mutable": false
+                    }},
+                    "bitwidth": {{
+                        "len": 16,
+                        "type": "bytes"
+                    }},
+                    "valid": [
+                        "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                    ]
+                }}
+                例子2说明：
+                    - Maker是一个字段名。
+                    - rfc4271是RFC文档的编号，4.1.是文档的章节。
+                    - mutable表示字段是否可变，这里是false，表示Marker字段不可变。
+                    - 注意，只有固定值的字段才需要mutable属性，如果字段的值不是固定的，不需要写"mutable":true。
+                    - bitwidth是字段的大小，单位是比特，这里是16字节。
+                    - valid是字段的有效值，这里是16个字节的全1。
+                例子3：
+                {{
+                    "struct_name": "Type",
+                    "info": {{
+                        "rfc": "rfc4271",
+                        "chapter": "4.1."
+                        "extend_from": "Message_Header"
+                    }},
+                    "bitwidth": {{
+                        "len": 1,
+                        "type": "byte"
+                    }},
+                    "fieldname": [
+                        "OPEN",
+                        "UPDATE",
+                        "TNOTIFICATION",
+                        "KEEPALIVE"
+                    ]
+                }}
+                例子3说明：
+                    - Type是一个字段名。
+                    - rfc4271是RFC文档的编号，4.1.是文档的章节。
+                    - extend_from表示字段的嵌套关系，这里表明该字段是Message_Header的一部分。
+                    - bitwidth是字段的大小，单位是比特，这里是1字节。
+                    - fieldname体现了嵌套关系，这里有四个字段：OPEN、UPDATE、TNOTIFICATION和KEEPALIVE，说明根据TYPE的取值可以对应这四个消息体。
                 '''}
     
     return prompt_dic[prompt_item]
@@ -149,5 +227,8 @@ def make_query(query_item):
         should be surrounded by <META_INFO></META_INFO> like example. DO NOT output empty meta information, if you just can extract Struct_list, \
         only output Struct_list, if you just can extract Value_list, only output Value_list. If you can not extract any information, do not output \
         empty meta information using <META_INFO></META_INFO>. Before extracting, recall the examples I gave you and analyze them step by step.
+        ''',
+        "query-4": f'''
+        仔细阅读和分析给定的文本，参考给你的例子，然后提取字段信息，用给定的JSON格式输出。注意，只要给出包含<META_INFO></META_INFO>的JSON格式即可，不需要输出其他信息。
         '''}
     return query_dic[query_item]

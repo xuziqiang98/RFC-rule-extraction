@@ -34,3 +34,7 @@ class Logger(logging.Logger):
         self.setLevel(level)
         for handler in self.handlers:
             handler.setLevel(level)
+
+class NullLogger:
+    def __getattr__(self, name):
+        return lambda *args, **kwargs: None

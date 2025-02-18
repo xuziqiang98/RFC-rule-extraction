@@ -5,8 +5,8 @@ from src.utils import extract_meta_info, merge_meta_info
 from src.configs.common_configs import PathConfig
 
 location = PathConfig().data
-log_dir = "rfc4271_deepseek-r1_32b_2025_02_03_19_56_36"
-log_name = "meta-info_rfc4271_prompt-4271-mti-1_query-3.txt"
+log_dir = "rfc4271_ep-20250218125805-px88r_2025_02_18_16_25_28"
+log_name = "meta-info_rfc4271_prompt-4271-mti-2_query-4.txt"
 log_path = location / log_dir / log_name
 raw_info = extract_meta_info(log_path)
 

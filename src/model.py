@@ -19,7 +19,9 @@ model_list = {"qwen-max": "QwenModel",
               "qwen2.5:14b": "OllamaModel",
               "deepseek-r1:32b": "OllamaModel",
               "deepseek-chat": "DeepseekModel",
-              "deepseek-reasoner": "DeepseekModel"}
+              "deepseek-reasoner": "DeepseekModel",
+              "ep-20250218125805-px88r": "ARKModel" # DeepSeek-R1
+              }
 
 class ModelFactory:
     def get(self, model):
@@ -127,7 +129,33 @@ class DeepseekModel(ModelBase):
                 }
             ],
             model = self.model,
-            max_tokens = 8192,
-            context_window = 65536,
+            # max_tokens = 8192,
+            # context_window = 65536,
+        )
+        return llm.choices[0].message.content
+    
+class ARKModel(ModelBase):
+    def __init__(self, model):
+        super().__init__(model)
+        self.client = OpenAI(
+            api_key=os.getenv("ARK_API_KEY"),
+            base_url="https://ark.cn-beijing.volces.com/api/v3",
+        )
+    
+    def run(self, prompt, query) -> str:
+        llm = self.client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": prompt
+                },
+                {
+                    "role": "user",
+                    "content": query
+                }
+            ],
+            model = self.model,
+            # max_tokens = 8192,
+            # context_window = 65536,
         )
         return llm.choices[0].message.content
