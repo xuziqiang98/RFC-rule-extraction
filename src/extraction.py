@@ -8,15 +8,10 @@ from src.model import ModelFactory
 
 def run(model, sections, prompt, query, save_path, logger):
     
-    # verbose = False
-    # if logger is not None:
-    #     verbose = True
-    
     llm_model = ModelFactory().get(model)
 
     for section in tqdm(sections):
-        if logger is not None:
-            logger.info(f"Section: {section}")
+        logger.info(f"Section: {section}")
 
         if sections[section] == "":
             continue
@@ -24,11 +19,9 @@ def run(model, sections, prompt, query, save_path, logger):
         try:
             output = llm_model.run(prompt, f"{query} Section: {section}. Content: {sections[section]}")
         except Exception as e:
-            if logger is not None:
-                logger.error(e)
+            logger.error(e)
         
-        if logger is not None:
-            logger.info(output)
+        logger.info(output)
         
         # store the answer in a file
         with open(save_path, "a") as file:
