@@ -133,11 +133,12 @@ def make_prompt(prompt_item):
                 任务：
                     - 从给定的RFC文档章节中提取字段信息，然后用给定的JSON格式输出。
                     - 提取信息之前，请参考我给你的例子，然后逐步分析，搞清楚应该提取什么信息。
-                    - 如果给定的文本不足以提取字段信息，直接跳过，不要用JSON输出错误信息或者说明性的信息。
+                    - 如果给定的文本不足以提取字段信息，直接跳过，不要用JSON输出错误信息或者说明性的信息，此时也不用输出<META_INFO></META_INFO>标签。
                 任务说明：
                     - 字段信息是指RFC文档中的字段名称、字段大小（字节）、字段取值、出自哪个RFC文档、文档的哪一章。
                     - 字段和字段之间可能存在嵌套关系，要在JSON中体现出来。
                     - 协议的实例一般由消息头、消息体和可选参数组成，每一部分都要提取字段信息。
+                    - 确保最后<META_INFO></META_INFO>包裹的JSON格式是正确的。
                     - 输出的JSON需要用<META_INFO></META_INFO>包裹。
                 例子1：
                 {{
@@ -181,6 +182,7 @@ def make_prompt(prompt_item):
                     - 注意，只有固定值的字段才需要mutable属性，如果字段的值不是固定的，不需要写"mutable":true。
                     - bitwidth是字段的大小，单位是比特，这里是16字节。
                     - valid是字段的有效值，这里是16个字节的全1。
+                    - 注意，valid列表里的一定是一个字符串表示的值，可以转成某个数，而不是一个描述。
                 例子3：
                 {{
                     "struct_name": "Type",
@@ -206,6 +208,54 @@ def make_prompt(prompt_item):
                     - extend_from表示字段的嵌套关系，这里表明该字段是Message_Header的一部分。
                     - bitwidth是字段的大小，单位是比特，这里是1字节。
                     - fieldname体现了嵌套关系，这里有四个字段：OPEN、UPDATE、TNOTIFICATION和KEEPALIVE，说明根据TYPE的取值可以对应这四个消息体。
+                ''',
+                "prompt-mti-fix-1": f'''
+                任务：
+                    - 修复给定的JSON格式的文本，使其符合所有的要求。
+                    - JSON文本的内容是从RFC文档中提取的字段信息。
+                    - 修复时需要参考任务说明，逐步修复JSON对象。
+                    - 只要原有的格式上修改，不要新增或删除字段
+                    - 修复时不要凭空捏造，要根据给定的文本进行修复。
+                    - 确保修复后的JSON对象格式正确，且必须被<META_INFO></META_INFO>包裹。
+                    - 除了JSON对象以及<META_INFO></META_INFO>，不要输出其他信息。
+                任务说明：
+                    - 第一步，检查JSON对象的个数，如果有多个对象，需要按照struct_name合并成一个对象。
+                    - 第二步，检查struct_name。
+                        - "struct_name"的值要么是消息头Message_Header，要么是字段名，不能是其他的。
+                        - "struct_name"的值不能使用缩写或首字母缩写。
+                        - "struct_name"的值如果由多个单词组成，单词之间用下划线分隔。
+                    - 第三步，检查info中的键和值。
+                        - "rfc"的值表示struct_name所在的RFC文档编号。
+                        - "rfc"的值的格式是rfc+RFC文档编号，如rfc4271。
+                        - 如果"rfc"的值不确定，应该用""表示。
+                        - "chapter"的值表示struct_name所在的章节。
+                        - "chapter"的值的格式是数字+点，如4.1.。
+                        - 如果"chapter"的值不确定，应该用""表示。
+                        - "extend_from"的值表示struct_name的父结构，体现了字段的嵌套关系。
+                        - 如果"extend_from"的值不确定，不需要添加"extend_from"这个键。
+                    - 第四步，检查bitwidth。
+                        - "bitwidth"的值是一个字典，包含"len"和"type"两个键。
+                        - "len"的值表示字段的长度，单位是比特。
+                        - 消息头Message_Header的"bitwidth"的值为空字典。
+                        - 如果"bitwidth"的值不确定，应该用{{}}表示。
+                    - 第五步，检查字段的值是否是固定的。
+                        - 如果字段的值是固定的，需要在"info"中添加"mutable": false，否则不需要添加。
+                        - 如果字段的值是固定的，需要添加"valid"，该键与"bitwidth"同级，否则不需要添加。
+                    - 第六步，检查valid。
+                        - "valid"的值是一个列表，包含字段的有效值，这个值必须用十六进制的字符串表示。
+                        - 十六进制的字符串格式是0x开头，后面跟着若干个十六进制数字，如果是英文字母要大写。
+                        - 除此之外，不要添加任何其他信息。
+                    - 第七步，检查fieldname。
+                        - "fieldname"的值是一个列表，只包含字段的名称，不要添加其他的信息。
+                        - "fieldname"列表中的字段如果由多个单词组成，单词之间用下划线分隔。
+                    - 第八步，确保没有新增其他的键。
+                        - JSON对象的第一层除了"struct_name"、"info"、"bitwidth"、"valid"、"fieldname"这几个键，不要新增其他的键。
+                        - "info"中的键可能有"rfc"、"chapter"、"mutable"、"extend_from"这些键，不要新增其他的键。
+                        - "bitwidth"中的键可能有"len"、"type"这两个键，不要新增其他的键。
+                    - 第九步，确保输出的JSON对象格式正确。
+                        - 确保修复后的JSON对象中只包含上述提到的键。
+                        - 如果JSON对象不需要修复，输出原JSON对象，且必须用<META_INFO></META_INFO>包裹JSON对象。
+                        - 如果JSON对象需要修复，只输出修复后的JSON对象，且必须用<META_INFO></META_INFO>包裹JSON对象。
                 '''}
     
     return prompt_dic[prompt_item]
@@ -230,5 +280,8 @@ def make_query(query_item):
         ''',
         "query-4": f'''
         仔细阅读和分析给定的文本，参考给你的例子，然后提取字段信息，用给定的JSON格式输出。注意，只要给出包含<META_INFO></META_INFO>的JSON格式即可，不需要输出其他信息。
+        ''',
+        "query-5": f'''
+        仔细阅读和分析任务，用给定的JSON格式输出。注意，只要给出包含<META_INFO></META_INFO>的JSON格式即可，不需要输出其他信息。
         '''}
     return query_dic[query_item]
