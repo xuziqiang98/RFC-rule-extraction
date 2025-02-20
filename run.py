@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from src.configs.common_configs import PathConfig
 from src.rfc import RFC
-from src.utils import split_document_by_sections, insert2excel, extract_meta_info, merge_meta_info
+from src.utils import split_document_by_sections, insert2excel, extract_meta_info, merge_meta_info, fix_mti_json
 from src.configs.prompt_factory import make_prompt, make_query
 from src.extraction import run as extraction_run
 from src.logger import Logger, NullLogger
@@ -49,6 +49,26 @@ def meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item,
     extraction_run(model, sections, mti_prompt, mti_query, meta_info_log_path, logger)
     
     logger.info(f"Extracting JSON formatted meta info from {meta_info_log_path}.")
+    
+    meta_info = extract_meta_info(meta_info_log_path)
+    
+    #############################
+    # Fix Meta Info             #
+    #############################
+    
+    logger.info(f"Start to fix the extracted meta info.")
+    
+    fix_prompt_item = "prompt-mti-fix-1"
+    fix_query_item = "query-5"
+    
+    fix_prompt = make_prompt(fix_prompt_item)
+    fix_query = make_query(fix_query_item)
+    
+    fix_mti_path = output_path / f"fixed_meta_info_{model}_{fix_prompt_item}_{fix_query_item}.txt"
+    
+    fix_mti_json(logger, meta_info, model, sections, fix_prompt, fix_query, fix_mti_path)
+    
+    logger.info(f"Fixed meta info is saved to {fix_mti_path}.")
     
     # meta_info = extract_meta_info(meta_info_log_path)
     

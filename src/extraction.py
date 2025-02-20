@@ -29,7 +29,7 @@ def run(model, sections, prompt, query, save_path, logger):
             file.write(f"{output}\n\n")
         file.close()
         
-        print(output)
+        # print(output)
         
         if model == "llama3.3-70b-instruct":
             time.sleep(5)

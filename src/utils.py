@@ -17,6 +17,9 @@ from openpyxl.utils import get_column_letter
 from openpyxl.styles import Font
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity as cos_sim
+from src.extraction import run
+from src.model import ModelFactory
+from tqdm import tqdm
 
 
 def enable_grad_for_hf_llm(func: MethodType | FunctionType) -> MethodType | FunctionType:
@@ -177,7 +180,12 @@ def extract_meta_info(log_path) -> list:
     # 使用正则表达式匹配规则
     pattern = r'<META_INFO>(.*?)<\/META_INFO>'
     
-    info = list(set(re.findall(pattern, log, re.DOTALL)))
+    raw_info = list(set(re.findall(pattern, log, re.DOTALL)))
+    info = []
+    
+    for item in raw_info:
+        if "struct_name" in item:
+            info.append(item)   
     return info
 
 def merge_meta_info(meta_info: list) -> dict:
@@ -226,3 +234,83 @@ def cosine_similarity(str1, str2):
     vectorizer = CountVectorizer().fit_transform([str1, str2])
     vectors = vectorizer.toarray()
     return cos_sim([vectors[0]], [vectors[1]])[0][0]
+
+def merge_mti(meta_info: list):
+    # mti_pool是一个缓冲池，用来存放JSON格式的meta info，以便后续合并
+    # key是字段名，value是meta info
+    mti_pool = {}
+    
+def fix_mti_json(logger, meta_info: list, model, sections, prompt, query, save_path):
+    # 按照chapter检索需要的章节，将具体的章节和对应的元信息json文本发送给大模型进行修复。
+    # meta_info转成字典，key是strcut_name，value是list保存meta_info
+    # 可能会有多个相同的struct_name
+    
+    logger.info("Convert meta info to dict.")
+    
+    meta_info_dict = {}
+    for item_raw in meta_info:  # 遍历原始数据列表
+        if not item_raw.strip():  # 跳过空字符串或纯空白字符
+            continue
+        
+        try:
+            # 解析JSON（自动处理单对象和列表）
+            parsed_data = json.loads(item_raw)
+            
+            # 统一转换为列表处理（无论原始是单个对象还是列表）
+            if isinstance(parsed_data, dict):
+                json_list = [parsed_data]  # 单个对象转列表
+            elif isinstance(parsed_data, list):
+                json_list = parsed_data  # 已经是列表直接使用
+            else:
+                continue  # 跳过非字典/列表的无效数据
+            
+            # 处理每个JSON对象
+            for info_json in json_list:
+                # 确保结构包含必要字段
+                if "struct_name" not in info_json:
+                    continue
+                
+                struct_name = info_json["struct_name"]
+                
+                # 按struct_name分类存储
+                if struct_name in meta_info_dict:
+                    meta_info_dict[struct_name].append(info_json)
+                else:
+                    meta_info_dict[struct_name] = [info_json]
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode failed: {e.msg}\nraw json：{item_raw}")
+            continue
+        except Exception as e:
+            logger.error(f"Unkown error: {str(e)}")
+            continue
+    
+    llm_model = ModelFactory().get(model)
+    
+    for field in tqdm(meta_info_dict):
+        # 取出chapter
+        chapter = meta_info_dict[field][0]["info"]["chapter"]
+        # print(f"Chapter: {chapter}")
+        # 取出section
+        section = ""
+        for s in sections:
+            if chapter in s:
+                section = s
+                break
+        # print(f"Section: {section}")
+        if section == "":
+            logger.error(f"Section not found for {field}.")
+            continue
+        
+        logger.info(f"Fixing meta info for {field} based on {section}.")
+        
+        try:
+            output = llm_model.run(prompt, f"{query} Meta_info_JSON: {meta_info_dict[field]} Section: {section}. Content: {sections[section]}")
+        except Exception as e:
+            logger.error(e)
+            
+        logger.info(output)
+        
+        with open(save_path, "a") as file:
+            file.write(f"Fix extracted meta info of: {field}\n")
+            file.write(f"{output}\n\n")
+        file.close()
