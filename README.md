@@ -1,36 +1,103 @@
-# Project Name
-RFC (Request for Comments) documents are a series of files that contain information related to Internet protocols, technical standards, operational specifications, etc. 
+# RFC Rule Extraction System
 
-This project aims to extracting rules from RFCs and detecting inconsistency bugs of protocol implementations based on specific RFCs. 
+A structured framework for extracting protocol rules from RFC documents and detecting implementation inconsistencies using Large Language Models (LLMs).
 
-## Environment
-Git clone this repo and enter the directory.
+## Features
 
-Before run this project, you have to install **conda**, which is a cross-platform package manager.
+- Automated RFC document processing and analysis
+- Rule extraction using multiple LLM backends:
+  - Qwen (Alibaba Cloud)
+  - GroqCloud API 
+  - Local Ollama deployments
+- Implementation consistency verification
+- Detailed logging and output generation
+- Configurable processing pipelines
 
-Suppose that you have already installed **conda**，use the following commands to install the required environment:
+## Project Structure
 
-`conda env create -f environment.yml`
+```
+.
+├── RFC/                  # RFC document storage
+├── data/                 # Processed data outputs
+├── src/                  # Core source code
+│   ├── configs/         # Prompt templates and LLM configurations
+│   ├── model.py         # LLM interface implementations
+│   └── extraction.py    # Rule extraction logic
+├── tests/               # Unit and integration tests
+├── environment.yml      # Conda environment specification
+└── run.py               # Main execution script
+```
 
-Then activate environment:
+## Environment Setup
 
-`conda activate rfc2rule`
+1. Clone repository and install dependencies:
 
-We use **qwen**, a LLM model supported from Alibaba, to extract rules from RFCs, so you have to apply an API KEY to run those code.
+```bash
+git https://github.com/xuziqiang98/RFC-rule-extraction.git
+cd rfc-rule-extraction
+conda env create -f environment.yml
+conda activate rfc2rule
+```
 
-[API]:https://bailian.console.aliyun.com/?apiKey=1#/api-key
+2. Configure LLM credentials:
 
-After that, configure API KEY to environment variables:
+```bash
+# For Qwen (Alibaba Cloud)
+echo "export DASHSCOPE_API_KEY='YOUR_API_KEY'" >> ~/.zshrc
 
-`echo "export DASHSCOPE_API_KEY='YOUR_DASHSCOPE_API_KEY'" >> ~/.bashrc`
+# For GroqCloud
+echo "export GROQ_API_KEY='YOUR_GROQ_KEY'" >> ~/.zshrc
 
-This project also supports **GroqCloud** API KEY or local LLM model deployed by **Ollama**.
+# For Ollama local models
+echo "export OLLAMA_HOST='http://localhost:11434'" >> ~/.zshrc
+```
+
+Reload shell configuration:
+```bash
+source ~/.zshrc
+```
 
 ## Usage
-You can use "--help" to check what options are available:
 
-`python run.py `
+Basic command structure:
+```bash
+python run.py --rfc <RFC_NUMBER> --model <MODEL_TYPE> [OPTIONS]
+```
 
-For example, use **qwen-max** model to extract rules from **RFC4271**, and save all logs simultaneously.
+### Common Options
 
-`python run.py --rfc 4271 --model qwen-max --verbose`
+| Option         | Description                          | Default     |
+|----------------|--------------------------------------|-------------|
+| `--rfc`        | RFC document number to process      | Required    |
+| `--model`      | LLM provider (qwen/groq/ollama)     | qwen-max    |
+| `--verbose`    | Enable detailed logging             | False       |
+| `--output`     | Output directory path               | ./data      |
+| `--max-tokens` | Maximum tokens per request          | 4096        |
+
+### Example Use Cases
+
+1. Basic rule extraction from RFC4271:
+```bash
+python run.py --rfc 4271 --model qwen-max
+```
+
+2. Run with GroqCloud API and debug logging:
+```bash
+python run.py --rfc 4271 --model groq-llama3-70b --verbose
+```
+
+3. Process with local Ollama model:
+```bash
+python run.py --rfc 4271 --model ollama-llama3 --max-tokens 2048
+```
+
+## Development
+
+Contribution guidelines:
+- Report issues via GitHub Issues
+- Create feature branches from `main`
+- Submit PRs with test coverage
+- Follow PEP8 coding standards
+
+## License
+Distributed under the MIT License. See `LICENSE` for details.

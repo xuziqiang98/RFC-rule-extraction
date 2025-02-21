@@ -21,3 +21,6 @@ pktrule-pktrule_rfc4271/
 *.json
 llm提取RFC整理.md
 RFC_Rule.md
+
+# cline
+.clineignore
