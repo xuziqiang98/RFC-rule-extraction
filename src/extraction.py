@@ -6,9 +6,9 @@ from openai import OpenAI
 from datetime import datetime
 from src.model import ModelFactory
 
-def run(model, sections, prompt, query, save_path, logger):
+def run(api, model, sections, prompt, query, save_path, logger):
     
-    llm_model = ModelFactory().get(model)
+    llm_model = ModelFactory().get(api, model)
 
     for section in tqdm(sections):
         logger.info(f"Section: {section}")

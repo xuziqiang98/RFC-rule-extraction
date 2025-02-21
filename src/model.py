@@ -5,29 +5,34 @@ from groq import Groq
 from openai import OpenAI
 from abc import ABC, abstractmethod
 
-model_list = {"qwen-max": "QwenModel",
-              "qwen-plus": "QwenModel",
-              "qwen-turbo": "QwenModel",
-              "qwen-long": "QwenModel",
-              "llama-3.3-70b-versatile": "GroqModel",
-              "llama-3.1-8b-instant": "GroqModel",
-              "mixtral-8x7b-32768": "GroqModel",
-              "llama3-70b-8192": "GroqModel",
-              "llama3.3-70b-instruct": "QwenModel",
-              "llama3.1-405b-instruct": "QwenModel",
-              "llama3.1": "OllamaModel",
-              "qwen2.5:14b": "OllamaModel",
-              "deepseek-r1:32b": "OllamaModel",
-              "deepseek-chat": "DeepseekModel",
-              "deepseek-reasoner": "DeepseekModel",
-              "ep-20250218125805-px88r": "ARKModel" # DeepSeek-R1
-              }
+# model_list = {"qwen-max": "QwenModel",
+#               "qwen-plus": "QwenModel",
+#               "qwen-turbo": "QwenModel",
+#               "qwen-long": "QwenModel",
+#               "llama-3.3-70b-versatile": "GroqModel",
+#               "llama-3.1-8b-instant": "GroqModel",
+#               "mixtral-8x7b-32768": "GroqModel",
+#               "llama3-70b-8192": "GroqModel",
+#               "llama3.3-70b-instruct": "QwenModel",
+#               "llama3.1-405b-instruct": "QwenModel",
+#               "llama3.1": "OllamaModel",
+#               "qwen2.5:14b": "OllamaModel",
+#               "deepseek-r1:32b": "OllamaModel",
+#               "deepseek-chat": "DeepseekModel",
+#               "deepseek-reasoner": "DeepseekModel",
+#               "ep-20250218125805-px88r": "ArkModel", # DeepSeek-R1
+#               "deepseek-r1": "QwenModel"}
 
 class ModelFactory:
-    def get(self, model):
-        assert model in model_list, f"LLM model{model} is not supported!"
-        model_class = globals().get(model_list[model])
-        return model_class(model)
+    def get(self, api, model):
+        # assert model in model_list, f"LLM model{model} is not supported!"
+        # model_class = globals().get(model_list[model])
+        from src.utils import get_class_by_name
+        class_name = api.capitalize() + "Model"
+        cls = get_class_by_name(class_name)
+        return cls(model)
+        
+        # return model_class(model)
 
 
 class ModelBase(ABC):
@@ -134,7 +139,7 @@ class DeepseekModel(ModelBase):
         )
         return llm.choices[0].message.content
     
-class ARKModel(ModelBase):
+class ArkModel(ModelBase):
     def __init__(self, model):
         super().__init__(model)
         self.client = OpenAI(

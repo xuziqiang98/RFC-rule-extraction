@@ -6,14 +6,14 @@ from datetime import datetime
 from pathlib import Path
 from src.configs.common_configs import PathConfig
 from src.rfc import RFC
-from src.utils import split_document_by_sections, insert2excel, extract_meta_info, merge_meta_info, fix_mti_json
+from src.mti import extract_meta_info, fix_mti_json, mti2dict, merge_reduntant_mti, nest_mti
+from src.utils import split_document_by_sections, insert2excel
 from src.configs.prompt_factory import make_prompt, make_query
 from src.extraction import run as extraction_run
 from src.logger import Logger, NullLogger
 from src.utils import get_script_name
 from src.configs.common_configs import LoggerConfig
 from src.model import ModelFactory
-from src.parser import build_nested_json
 
 def rfc2chucks(logger, rfc_name, rfc):
     logger.info(f"Splitting the document {rfc_name} into sections.")
@@ -21,7 +21,7 @@ def rfc2chucks(logger, rfc_name, rfc):
     sections = split_document_by_sections(rfc)
     return sections
 
-def pkt_rules_extraction(logger,rfc_name, pkt_prompt_item, pkt_query_item, model, sections, pkt_prompt, pkt_query, output_path):
+def pkt_rules_extraction(logger,rfc_name, pkt_prompt_item, pkt_query_item, api, model, sections, pkt_prompt, pkt_query, output_path):
     # pkt rule的日志
     pktrule_log = f"pktrule_{rfc_name}_{pkt_prompt_item}_{pkt_query_item}.txt"
     pktrule_log_path = output_path / pktrule_log
@@ -29,7 +29,7 @@ def pkt_rules_extraction(logger,rfc_name, pkt_prompt_item, pkt_query_item, model
     logger.info(f"Extracting pkt rules from {rfc_name} using LLM model {model}.")
     
     # LLMs提取规则的输出保存在pktrule_log_path中
-    extraction_run(model, sections, pkt_prompt, pkt_query, pktrule_log_path, logger)
+    extraction_run(api, model, sections, pkt_prompt, pkt_query, pktrule_log_path, logger)
     
     logger.info("Inserting extracted rules into Excel file.")
     
@@ -39,14 +39,14 @@ def pkt_rules_extraction(logger,rfc_name, pkt_prompt_item, pkt_query_item, model
     
     logger.info(f"Extracted rules are saved to {output_path}.")
         
-def meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item, model, sections, mti_prompt, mti_query, output_path):
+def meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item, api, model, sections, mti_prompt, mti_query, output_path):
     # meta info的日志
     meta_info_log = f"meta-info_{rfc_name}_{mti_prompt_item}_{mti_query_item}.txt"
     meta_info_log_path = output_path / meta_info_log
     
     logger.info(f"Extracting meta info from {rfc_name} using LLM model {model}.")
     
-    extraction_run(model, sections, mti_prompt, mti_query, meta_info_log_path, logger)
+    extraction_run(api, model, sections, mti_prompt, mti_query, meta_info_log_path, logger)
     
     logger.info(f"Extracting JSON formatted meta info from {meta_info_log_path}.")
     
@@ -66,39 +66,47 @@ def meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item,
     
     fix_mti_path = output_path / f"fixed_meta_info_{model}_{fix_prompt_item}_{fix_query_item}.txt"
     
-    fix_mti_json(logger, meta_info, model, sections, fix_prompt, fix_query, fix_mti_path)
+    fix_mti_json(logger, meta_info, api, model, sections, fix_prompt, fix_query, fix_mti_path)
     
     logger.info(f"Fixed meta info is saved to {fix_mti_path}.")
     
-    # meta_info = extract_meta_info(meta_info_log_path)
+    #############################
+    # Merge Reduntant Meta Info #
+    #############################
     
-    # logger.info(f"Merging meta info from {meta_info_log_path}.")
+    logger.info(f"Start to merge the fixed meta info.")
     
-    # # 合并完的meta info
-    # json_info = merge_meta_info(meta_info)
+    fix_mti = extract_meta_info(fix_mti_path)
     
-    # meta_info_json = f"meta-info_{rfc_name}.json"
-    # meta_info_json_path = output_path / meta_info_json
+    mti_dict = mti2dict(fix_mti)
     
-    # logger.info(f"Saving JSON formatted meta info to {meta_info_json_path}.")
+    merge_prompt_item = "prompt-mti-merge-1"
+    merge_query_item = "query-5"
+    merge_prompt = make_prompt(merge_prompt_item)
+    merge_query = make_query(merge_query_item)
+    merged_mti_path = output_path / f"merged_meta_info_{model}_{merge_prompt_item}_{merge_query_item}.txt"
+
+    new_mti_dict = merge_reduntant_mti(mti_dict, logger, api, model,  merge_prompt, merge_query, merged_mti_path)
+
+    #############################
+    # Nest Meta Info            #
+    #############################
     
-    # with open(meta_info_json_path, "w") as file:
-    #     json.dump(json_info, file, indent=4)
+    nested_mti_path = output_path / f"nested_meta_info.txt"
     
-    # # 将meta info处理成嵌套结构
-    # nested_json = build_nested_json(rfc, json_info)
-    # nested_json_path = output_path / f"nested_{rfc_name}.json"
+    nested_mti = nest_mti(new_mti_dict)
+
+    with open(nested_mti_path, "w") as file:
+        file.write(f"{json.dumps(nested_mti, indent=4)}")
+    file.close() 
     
-    # logger.info(f"Saving nested JSON formatted meta info to {nested_json_path}.")
-    
-    # with open(nested_json_path, "w") as file:
-    #     json.dump(nested_json, file, indent=4)
 
 @click.command()
 @click.option('--rfc', required = True, type = str, default="4271", help="The path to the RFC document.")
-@click.option('--model', required = True, type = str, default="qwen-max", help="The LLM model used to extract rules.")
+@click.option('--api', required = True, type = str, default="ollama", help="The API used to submit the LLM model.")
+@click.option('--model', required = True, type = str, default="deepseek-r1:32b", help="The LLM model used to extract rules.")
 @click.option('--verbose', is_flag = True, help="Save exhausted log.")
-def run(rfc, model, verbose):
+def run(rfc, api, model, verbose):
     
     #############################
     # Set Variables             #
@@ -152,7 +160,7 @@ def run(rfc, model, verbose):
     pkt_prompt = make_prompt(pkt_prompt_item)
     pkt_query = make_query(pkt_query_item)
     
-    # pkt_rules_extraction(logger, rfc_name, pkt_prompt_item, pkt_query_item, model, sections, pkt_prompt, pkt_query, output_path)
+    # pkt_rules_extraction(logger, rfc_name, pkt_prompt_item, pkt_query_item, api, model, sections, pkt_prompt, pkt_query, output_path)
     
     #############################
     # Extract Meta Info         #
@@ -164,11 +172,11 @@ def run(rfc, model, verbose):
     mti_prompt = make_prompt(mti_prompt_item)
     mti_query = make_query(mti_query_item)
     
-    meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item, model, sections, mti_prompt, mti_query, output_path)
+    meta_info_extraction(logger, rfc, rfc_name, mti_prompt_item, mti_query_item, api, model, sections, mti_prompt, mti_query, output_path)
     
     logger.info("All processes are done.")
 
 if __name__ == '__main__':
     run()
     
-# python run.py --rfc 4271 --model deepseek-chat --verbose
+# python run.py --rfc 4271 --api qwen --model deepseek-r1 --verbose

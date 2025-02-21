@@ -1,7 +1,8 @@
 import path_setup
 import json
 
-from src.utils import extract_meta_info, fix_mti_json, split_document_by_sections
+from src.mti import fix_mti_json, extract_meta_info
+from src.utils import split_document_by_sections
 from src.configs.common_configs import PathConfig
 from src.logger import NullLogger
 from src.configs.prompt_factory import make_prompt, make_query

@@ -195,6 +195,12 @@ def make_prompt(prompt_item):
                         "len": 1,
                         "type": "byte"
                     }},
+                    "valid": [
+                        "0x01",
+                        "0x02",
+                        "0x03",
+                        "0x04"
+                    ],
                     "fieldname": [
                         "OPEN",
                         "UPDATE",
@@ -205,9 +211,11 @@ def make_prompt(prompt_item):
                 例子3说明：
                     - Type是一个字段名。
                     - rfc4271是RFC文档的编号，4.1.是文档的章节。
-                    - extend_from表示字段的嵌套关系，这里表明该字段是Message_Header的一部分。
+                    - extend_from表示结构或者字段的嵌套关系，这里表明该字段是Message_Header的一部分。
                     - bitwidth是字段的大小，单位是比特，这里是1字节。
-                    - fieldname体现了嵌套关系，这里有四个字段：OPEN、UPDATE、TNOTIFICATION和KEEPALIVE，说明根据TYPE的取值可以对应这四个消息体。
+                    - valid是Type字段的有效值，这里有四个值，分别是1、2、3、4。
+                    - fieldname体现了结构或者字段的嵌套关系，这里有四个值：OPEN、UPDATE、TNOTIFICATION和KEEPALIVE，\
+                        分别对应valid中的取值。比如，Type字段的值是0x01，对应的是OPEN消息体。
                 ''',
                 "prompt-mti-fix-1": f'''
                 任务：
@@ -216,14 +224,18 @@ def make_prompt(prompt_item):
                     - 修复时需要参考任务说明，逐步修复JSON对象。
                     - 只要原有的格式上修改，不要新增或删除字段
                     - 修复时不要凭空捏造，要根据给定的文本进行修复。
-                    - 确保修复后的JSON对象格式正确，且必须被<META_INFO></META_INFO>包裹。
+                    - 确保修复后的JSON对象格式正确，能被json.loads正确读取，且必须被<META_INFO></META_INFO>包裹。
                     - 除了JSON对象以及<META_INFO></META_INFO>，不要输出其他信息。
+                字段格式：
+                    - 不能使用缩写或首字母缩写。
+                    - 如果是驼峰命名法，需要转换成下划线分隔的形式。
+                    - 如果是一个英文单词，单词大写。
+                    - 如果由多个单词组成，单词首字母大写，单词之间用下划线分隔。
                 任务说明：
                     - 第一步，检查JSON对象的个数，如果有多个对象，需要按照struct_name合并成一个对象。
                     - 第二步，检查struct_name。
                         - "struct_name"的值要么是消息头Message_Header，要么是字段名，不能是其他的。
-                        - "struct_name"的值不能使用缩写或首字母缩写。
-                        - "struct_name"的值如果由多个单词组成，单词之间用下划线分隔。
+                        - "struct_name"的值的格式参照字段格式要求。
                     - 第三步，检查info中的键和值。
                         - "rfc"的值表示struct_name所在的RFC文档编号。
                         - "rfc"的值的格式是rfc+RFC文档编号，如rfc4271。
@@ -233,6 +245,7 @@ def make_prompt(prompt_item):
                         - 如果"chapter"的值不确定，应该用""表示。
                         - "extend_from"的值表示struct_name的父结构，体现了字段的嵌套关系。
                         - 如果"extend_from"的值不确定，不需要添加"extend_from"这个键。
+                        - "extend_from"值的格式参照字段格式要求。
                     - 第四步，检查bitwidth。
                         - "bitwidth"的值是一个字典，包含"len"和"type"两个键。
                         - "len"的值表示字段的长度，单位是比特。
@@ -244,18 +257,40 @@ def make_prompt(prompt_item):
                     - 第六步，检查valid。
                         - "valid"的值是一个列表，包含字段的有效值，这个值必须用十六进制的字符串表示。
                         - 十六进制的字符串格式是0x开头，后面跟着若干个十六进制数字，如果是英文字母要大写。
+                        - 消息头没有"valid"这个键，也没有"mutable": false。
                         - 除此之外，不要添加任何其他信息。
                     - 第七步，检查fieldname。
                         - "fieldname"的值是一个列表，只包含字段的名称，不要添加其他的信息。
-                        - "fieldname"列表中的字段如果由多个单词组成，单词之间用下划线分隔。
+                        - 如果"fieldname"列表中的某个字段出现在"struct_name"或者"extend_from"的中，把这个字段从"fieldname"中删除。
+                        - "fieldname"列表中的字段的格式参照字段格式要求。
                     - 第八步，确保没有新增其他的键。
                         - JSON对象的第一层除了"struct_name"、"info"、"bitwidth"、"valid"、"fieldname"这几个键，不要新增其他的键。
                         - "info"中的键可能有"rfc"、"chapter"、"mutable"、"extend_from"这些键，不要新增其他的键。
                         - "bitwidth"中的键可能有"len"、"type"这两个键，不要新增其他的键。
                     - 第九步，确保输出的JSON对象格式正确。
                         - 确保修复后的JSON对象中只包含上述提到的键。
-                        - 如果JSON对象不需要修复，输出原JSON对象，且必须用<META_INFO></META_INFO>包裹JSON对象。
+                        - 如果JSON对象不需要修复，只需要输出原JSON对象，且必须用<META_INFO></META_INFO>包裹JSON对象。
                         - 如果JSON对象需要修复，只输出修复后的JSON对象，且必须用<META_INFO></META_INFO>包裹JSON对象。
+                ''',
+                "prompt-mti-merge-1": f'''
+                任务：
+                    - 合并给定列表里的多个JSON对象，使其符合所有的要求。
+                    - JSON对象是从RFC文档中提取的字段信息。
+                    - 确保合并后的JSON对象格式正确。
+                    - 合并后的JSON对象必须被<META_INFO></META_INFO>包裹。
+                任务说明：
+                    - 按照struct_name合并JSON对象。
+                    - 按照JSON对象的原来的层级结构合并。
+                    - "chapter"表示章节，如果遇到"chapter"冲突，保留一个最小的"chapter"。
+                    - "extend_from"表示父结构，如果遇到"extend_from"冲突，根据对RFC文档的理解，保留一个最可能的"extend_from"。
+                    - "bitwidth"表示字段的大小，如果遇到"bitwidth"冲突，设"bitwidth": {{}}。
+                    - "valid"是一个列表，包含字段的有效值，如果"valid"中的元素出现不同，全部保留。
+                    - 确保修改后的"valid"仍然是一个列表，且不存在嵌套的列表。
+                    - "fieldname"是一个列表，如果"fieldname"中的元素出现不同，全部保留。
+                    - 确保修改后的"fieldname"仍然是一个列表，且不存在嵌套的列表。
+                    - 如果存在"valid"，"info"中一定存在"mutable: false"，否则不需要添加"mutable: true"。
+                    - 只做合并操作，不要新增或删除键。
+                    - 不要进行任何其他操作或添加任何其他信息。
                 '''}
     
     return prompt_dic[prompt_item]
